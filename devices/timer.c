@@ -155,8 +155,7 @@ static void timer_interrupt(struct intr_frame *args UNUSED)
 			e = list_next (e); 
 		}
 	}
-	/* [Pintos] 프로젝트 1: 알람 시계를 구현하기 위해
-	   여기서 잠자는 스레드를 깨우는 로직을 호출해야 합니다. */
+	
 	thread_tick();
 }
 

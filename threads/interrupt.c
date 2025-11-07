@@ -111,8 +111,7 @@ static void pic_end_of_interrupt (int irq);
 void intr_handler (struct intr_frame *args);
 
 /* 현재 인터럽트 상태를 반환합니다. */
-enum intr_level
-intr_get_level (void) {
+enum intr_level intr_get_level (void) {
     uint64_t flags;
 
     /* 플래그 레지스터를 프로세서 스택에 푸시(push)한 다음,
@@ -126,14 +125,12 @@ intr_get_level (void) {
 
 /* LEVEL에 명시된 대로 인터럽트를 활성화하거나 비활성화하고
    이전의 인터럽트 상태를 반환합니다. */
-enum intr_level
-intr_set_level (enum intr_level level) {
+enum intr_level intr_set_level (enum intr_level level) {
     return level == INTR_ON ? intr_enable () : intr_disable ();
 }
 
 /* 인터럽트를 활성화하고 이전 인터럽트 상태를 반환합니다. */
-enum intr_level
-intr_enable (void) {
+enum intr_level intr_enable (void) {
     enum intr_level old_level = intr_get_level ();
     ASSERT (!intr_context ());
 
@@ -147,8 +144,7 @@ intr_enable (void) {
 }
 
 /* 인터럽트를 비활성화하고 이전 인터럽트 상태를 반환합니다. */
-enum intr_level
-intr_disable (void) {
+enum intr_level intr_disable (void) {
     enum intr_level old_level = intr_get_level ();
 
     /* 인터럽트 플래그를 클리어(clear)하여 인터럽트를 비활성화합니다.
@@ -160,8 +156,7 @@ intr_disable (void) {
 }
 
 /* 인터럽트 시스템을 초기화합니다. */
-void
-intr_init (void) {
+void intr_init (void) {
     int i;
 
     /* 인터럽트 컨트롤러 초기화. */
@@ -207,8 +202,7 @@ intr_init (void) {
    DPL로 호출되도록 합니다. 디버깅을 위해 인터럽트 이름을
    NAME으로 지정합니다. 인터럽트 핸들러는 LEVEL로 설정된
    인터럽트 상태에서 호출됩니다. */
-static void
-register_handler (uint8_t vec_no, int dpl, enum intr_level level,
+static void register_handler (uint8_t vec_no, int dpl, enum intr_level level,
                   intr_handler_func *handler, const char *name) {
     ASSERT (intr_handlers[vec_no] == NULL);
     if (level == INTR_ON) {
@@ -224,8 +218,7 @@ register_handler (uint8_t vec_no, int dpl, enum intr_level level,
 /* 외부 인터럽트 VEC_NO를 등록하여 HANDLER를 호출하도록 합니다.
    디버깅 목적으로 NAME이 이름으로 사용됩니다. 핸들러는
    인터럽트가 비활성화된 상태로 실행됩니다. */
-void
-intr_register_ext (uint8_t vec_no, intr_handler_func *handler,
+void intr_register_ext (uint8_t vec_no, intr_handler_func *handler,
                    const char *name) {
     ASSERT (vec_no >= 0x20 && vec_no <= 0x2f);
     register_handler (vec_no, 0, INTR_OFF, handler, name);
@@ -244,8 +237,7 @@ intr_register_ext (uint8_t vec_no, intr_handler_func *handler,
    [IA32-v3a] 섹션 4.5 "Privilege Levels"와 4.8.1.1
    "Accessing Nonconforming Code Segments"에서
    추가적인 논의를 참조하세요. */
-void
-intr_register_int (uint8_t vec_no, int dpl, enum intr_level level,
+void intr_register_int (uint8_t vec_no, int dpl, enum intr_level level,
                    intr_handler_func *handler, const char *name)
 {
     ASSERT (vec_no < 0x20 || vec_no > 0x2f);
@@ -254,16 +246,14 @@ intr_register_int (uint8_t vec_no, int dpl, enum intr_level level,
 
 /* 외부 인터럽트 처리 중에는 true를,
    그 외 모든 시간에는 false를 반환합니다. */
-bool
-intr_context (void) {
+bool intr_context (void) {
     return in_external_intr;
 }
 
 /* 외부 인터럽트 처리 중에, 인터럽트 핸들러가
    인터럽트에서 반환하기 직전에 새 프로세스에 양보(yield)하도록
    지시합니다. 다른 시점에는 호출될 수 없습니다. */
-void
-intr_yield_on_return (void) {
+void intr_yield_on_return (void) {
     ASSERT (intr_context ());
     yield_on_return = true;
 }
@@ -284,8 +274,7 @@ intr_yield_on_return (void) {
    32...47 (0x20...0x2f)로 전달되도록 합니다. */
 
 /* PIC를 초기화합니다. 자세한 내용은 [8259A]를 참조하세요. */
-static void
-pic_init (void) {
+static void pic_init (void) {
     /* 양쪽 PIC의 모든 인터럽트를 마스크(차단)합니다. */
     outb (0x21, 0xff);
     outb (0xa1, 0xff);
@@ -310,8 +299,7 @@ pic_init (void) {
 /* 주어진 IRQ에 대해 PIC에게 EOI(end-of-interrupt) 신호를 보냅니다.
    만약 우리가 IRQ를 확인(acknowledge)하지 않으면, 이 IRQ는 우리에게
    다시는 전달되지 않으므로, 이 작업은 중요합니다. */
-static void
-pic_end_of_interrupt (int irq) {
+static void pic_end_of_interrupt (int irq) {
     ASSERT (irq >= 0x20 && irq < 0x30);
 
     /* 마스터 PIC에 확인 신호. */
@@ -327,8 +315,7 @@ pic_end_of_interrupt (int irq) {
    함수는 intr-stubs.S의 어셈블리 언어 인터럽트 스텁(stub)에 의해
    호출됩니다. FRAME은 인터럽트와 인터럽트된
    스레드의 레지스터를 설명합니다. */
-void
-intr_handler (struct intr_frame *frame) {
+void intr_handler (struct intr_frame *frame) {
     bool external;
     intr_handler_func *handler;
 
@@ -374,8 +361,7 @@ intr_handler (struct intr_frame *frame) {
 }
 
 /* 디버깅을 위해 인터럽트 프레임 F를 콘솔에 덤프합니다. */
-void
-intr_dump_frame (const struct intr_frame *f) {
+void intr_dump_frame (const struct intr_frame *f) {
     /* CR2는 마지막 페이지 폴트(page fault)의 선형 주소(linear address)입니다.
        [IA32-v2a] "MOV--Move to/from Control Registers"와
        [IA32-v3a] 5.14 "Interrupt 14--Page Fault Exception
@@ -398,7 +384,6 @@ intr_dump_frame (const struct intr_frame *f) {
 }
 
 /* 인터럽트 VEC의 이름을 반환합니다. */
-const char *
-intr_name (uint8_t vec) {
+const char * intr_name (uint8_t vec) {
     return intr_names[vec];
 }
