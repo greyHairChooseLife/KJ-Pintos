@@ -155,7 +155,9 @@ void list_insert(struct list_elem* before, struct list_elem* elem) {
 
 /* Removes elements FIRST though LAST (exclusive) from their
    current list, then inserts them just before BEFORE, which may
-   be either an interior element or a tail. */
+   be either an interior element or a tail.
+   - before: _, _, _, a, b, c, d, e, f
+   - after : c, d, e, a, b, _, _, _, f */
 void list_splice(struct list_elem* before,
                  struct list_elem* first,
                  struct list_elem* last) {
@@ -311,7 +313,12 @@ static bool is_sorted(struct list_elem* a,
    elements that are in nondecreasing order according to LESS
    given auxiliary data AUX.  Returns the (exclusive) end of the
    run.
-   A through B (exclusive) must form a non-empty range. */
+   A through B (exclusive) must form a non-empty range.
+   정렬되지 않은 첫번째 요소 찾기.
+   ex) list: `2, 3, 5, 4, 6`
+   - a: 2
+   - b: 6
+   - return: 4 */
 static struct list_elem* find_end_of_run(struct list_elem* a,
                                          struct list_elem* b,
                                          list_less_func* less,
@@ -413,7 +420,9 @@ void list_insert_ordered(struct list* list,
 /* Iterates through LIST and removes all but the first in each
    set of adjacent elements that are equal according to LESS
    given auxiliary data AUX.  If DUPLICATES is non-null, then the
-   elements from LIST are appended to DUPLICATES. */
+   elements from LIST are appended to DUPLICATES.
+   - list에서 중복 제거
+   - 제거된 중복 요소들을 duplicates에 저장 */
 void list_unique(struct list* list,
                  struct list* duplicates,
                  list_less_func* less,
