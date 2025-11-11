@@ -151,23 +151,23 @@ void thread_tick(void) {
     if (++thread_ticks >= TIME_SLICE) intr_yield_on_return();
 }
 
-// 자는애가 하나라도 있으면 깨운다.(thread_unblock)
+// wakeup_time 정렬된 것을 활용해 깨울만큼 깨운다.(thread_unblock)
 void awake(int64_t total_elapsed) {
     if (list_empty(&sleep_list)) return;  // early return
 
-    struct thread* top;
-    size_t listLen = list_size(&sleep_list);
+    struct thread* front =
+        list_entry(list_front(&sleep_list), struct thread, elem);
 
-    for (size_t i = 0; i < listLen; i++)
+    size_t len = list_size(&sleep_list);
+
+    for (size_t i = 0; i < len; i++)
     {
-        top = list_entry(list_pop_front(&sleep_list), struct thread, elem);
+        if (front->wakeup_time - total_elapsed > 0) return;
 
-        if (top->wakeup_time - total_elapsed <= 0)
-            thread_unblock(top);
-        else
-            list_push_back(&sleep_list, &top->elem);
+        struct list_elem* next = list_remove(&front->elem);
+        thread_unblock(front);
 
-        top = list_entry(list_next(&top->elem), struct thread, elem);
+        front = list_entry(next, struct thread, elem);
     }
 }
 
