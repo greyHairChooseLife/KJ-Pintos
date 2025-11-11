@@ -29,7 +29,6 @@ static bool too_many_loops(unsigned loops);
 static void busy_wait(int64_t loops);
 static void real_time_sleep(int64_t num, int32_t denom);
 
-static struct list sleep_list;
 
 /* 8254 프로그래머블 인터벌 타이머(PIT)를 설정하여
    초당 TIMER_FREQ 횟수만큼 인터럽트를 발생시키고,
@@ -44,8 +43,6 @@ void timer_init(void)
 	outb(0x40, count >> 8);
 
 	intr_register_ext(0x20, timer_interrupt, "8254 Timer");
-
-	list_init(&sleep_list);
 }
 
 /* 짧은 지연(delay)을 구현하는 데 사용되는 loops_per_tick을 보정(calibrate)합니다. */
@@ -92,25 +89,12 @@ int64_t timer_elapsed(int64_t then)
 }
 
 /* 약 TICKS (횟수)의 타이머 틱 동안 실행을 일시 중단합니다. */
-void timer_sleep(int64_t ticks)
-{
-	if (ticks <= 0) 
-		return;
+void timer_sleep (int64_t ticks) {
+    if (ticks <= 0) {
+        return;
+    }
 
-	struct thread *curr = thread_current();
-
-	int64_t wakeup_tick = timer_ticks() + ticks;
-	curr->wakeup_tick = wakeup_tick;
-
-	enum intr_level old_level;
-	old_level = intr_disable();
-
-	list_push_back(&sleep_list, &(curr->elem));
-	thread_block();
-	
-	intr_set_level(old_level);
-
-	ASSERT(intr_get_level() == INTR_ON);
+    thread_sleep_until(timer_ticks() + ticks);
 }
 
 /* 약 MS 밀리초 동안 실행을 일시 중단합니다. */
@@ -141,26 +125,15 @@ void timer_print_stats(void)
 static void timer_interrupt(struct intr_frame *args UNUSED)
 {
 	ticks++;
-
-	struct list_elem *e = list_begin (&sleep_list);
-
-	while (e != list_end (&sleep_list))
-	{
-		struct thread *t = list_entry (e, struct thread, elem);
-
-		if (t->wakeup_tick <= ticks) {
-			e = list_remove (e); 
-			thread_unblock (t);
-		} else {
-			e = list_next (e); 
-		}
-	}
 	
-	thread_tick();
+    thread_tick();
+
+    thread_wakeup(ticks);
 }
 
+
 /* LOOPS 횟수만큼 반복(iteration)하는 것이 1 타이머 틱보다
-   오래 걸리면 true를, 그렇지 않으면 false를 반환합니다. */
+    오래 걸리면 true를, 그렇지 않으면 false를 반환합니다. */
 static bool too_many_loops(unsigned loops)
 {
 	/* 타이머 틱을 기다립니다. */
