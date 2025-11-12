@@ -134,41 +134,44 @@ void lock_acquire(struct lock *lock)
     struct thread *current = thread_current();
     enum intr_level old_level;
 
-    old_level = intr_disable();
+    old_level = intr_disable(); 
 
-    if (lock->holder == NULL)
-    {
+    if (lock->holder == NULL) {
         lock->holder = current;
-    }
-    else
-    {
-        current->waiting_for_lock = lock;
-
-        list_insert_ordered(&lock->holder->donations,
-                            &current->donation_elem,
-                            thread_donation_less_func, NULL);
-
-        // 락 소유자(L)부터 연쇄적으로 우선순위 재계산(전파)
-        struct thread *donee = lock->holder;
-        while (donee != NULL)
+    } else {
+        
+        if (!thread_mlfqs) 
         {
-            thread_recalculate_priority(donee);
+            // 1. 내가 이 락을 기다린다고 기록
+            current->waiting_for_lock = lock;
 
-            // 만약 L도 다른 락을 기다리고 있다면 (Nested donation)
-            donee = donee->waiting_for_lock ? donee->waiting_for_lock->holder : NULL;
+            // 2. 락 소유자의 'donations' 리스트에 나를 정렬 삽입
+            list_insert_ordered(&lock->holder->donations,
+                                &current->donation_elem,
+                                thread_donation_less_func, NULL);
+            
+            // 3. 락 소유자(L)부터 연쇄적으로 우선순위 재계산(전파)
+            struct thread *donee = lock->holder;
+            while (donee != NULL) {
+                thread_recalculate_priority(donee);
+                donee = donee->waiting_for_lock ? donee->waiting_for_lock->holder : NULL;
+            }
         }
-
-        // 락의 대기열(sema->waiters)에 정렬 삽입 후 잠들기
-        list_insert_ordered(&lock->semaphore.waiters,
-                            &current->elem,
+        
+        // 4. (공통) 락의 대기열에 정렬 삽입 후 잠들기
+        list_insert_ordered(&lock->semaphore.waiters, 
+                            &current->elem, 
                             thread_priority_less_func, NULL);
-        thread_block();
+        thread_block(); 
 
         lock->holder = current;
-        current->waiting_for_lock = NULL;
+        
+        if (!thread_mlfqs) {
+            current->waiting_for_lock = NULL; 
+        }
     }
-
-    intr_set_level(old_level);
+    
+    intr_set_level(old_level); 
 }
 
 /* LOCK 획득을 시도합니다 (non-blocking). */
@@ -202,35 +205,33 @@ void lock_release(struct lock *lock)
     ASSERT(lock_held_by_current_thread(lock));
 
     struct thread *current = thread_current();
-    enum intr_level old_level = intr_disable();
+    enum intr_level old_level = intr_disable(); 
 
-    struct list_elem *e = list_begin(&current->donations);
-    while (e != list_end(&current->donations))
+    if (!thread_mlfqs)
     {
-        struct thread *donor = list_entry(e, struct thread, donation_elem);
+        // 1. 기부자(donor) 리스트에서 이 락을 기다리던 애들 제거
+        struct list_elem *e = list_begin(&current->donations);
+        while (e != list_end(&current->donations)) {
+            struct thread *donor = list_entry(e, struct thread, donation_elem);
+            if (donor->waiting_for_lock == lock) {
+                e = list_remove(e);
+            } else {
+                e = list_next(e);
+            }
+        }
 
-        if (donor->waiting_for_lock == lock)
-        {
-            e = list_remove(e);
-        }
-        else
-        {
-            e = list_next(e);
-        }
+        // 2. 우선순위 재계산
+        thread_recalculate_priority(current);
     }
 
-    thread_recalculate_priority(current);
-
-    if (!list_empty(&lock->semaphore.waiters))
-    {
+    // 3. (공통) 다음 스레드 깨우기
+    if (!list_empty(&lock->semaphore.waiters)) {
         struct thread *t = list_entry(list_pop_front(&lock->semaphore.waiters), struct thread, elem);
-        thread_unblock(t);
-    }
-    else
-    {
+        thread_unblock(t); 
+    } else {
         lock->holder = NULL;
     }
-
+    
     intr_set_level(old_level);
 }
 

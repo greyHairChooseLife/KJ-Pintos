@@ -49,6 +49,10 @@ struct thread {
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* Ready list, Sleep list 등에 사용 */
 
+    int nice;
+    int recent_cpu;
+    struct list_elem all_elem;
+
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint64_t *pml4;                     /* Page map level 4 */
@@ -97,7 +101,6 @@ int thread_get_load_avg (void);
 
 void do_iret (struct intr_frame *tf);
 
-/* ----- ⬇️ Project 1 (Priority Scheduling) ⬇️ ----- */
 /* 'elem' 멤버를 기준으로 우선순위를 비교하는 함수 (내림차순) */
 bool thread_priority_less_func(const struct list_elem *a,
                                const struct list_elem *b,
@@ -111,12 +114,17 @@ bool thread_donation_less_func(const struct list_elem *a,
                                const struct list_elem *b,
                                void *aux UNUSED);
                                
-/* ----- ⬇️ Project 1 (Alarm Clock) ⬇️ ----- */
 /* sleep_list를 확인하여 깨어날 시간이 된 스레드를 깨웁니다. */
 void thread_wakeup(int64_t current_ticks);
 
 bool thread_wake_up_tick_less_func(const struct list_elem *a,
                                const struct list_elem *b,
                                void *aux UNUSED);
+
+void mlfqs_increment_recent_cpu(void);
+void mlfqs_update_load_avg(void);
+void mlfqs_update_all_recent_cpu(void);
+void mlfqs_update_all_priorities(void);
+void mlfqs_calculate_priority(struct thread *t);
 
 #endif /* threads/thread.h */

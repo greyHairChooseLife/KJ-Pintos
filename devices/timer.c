@@ -122,13 +122,29 @@ void timer_print_stats(void)
 }
 
 /* 타이머 인터럽트 핸들러. */
-static void timer_interrupt(struct intr_frame *args UNUSED)
-{
-	ticks++;
-	
-    thread_tick();
+static void timer_interrupt (struct intr_frame *args UNUSED) {
+    ticks++;
+    
+    thread_wakeup(ticks); 
 
-    thread_wakeup(ticks);
+    if (thread_mlfqs) {
+        
+        /* 매 틱마다: 실행 중인 스레드의 recent_cpu 1 증가 */
+        mlfqs_increment_recent_cpu(); 
+
+        /* 매 1초(TIMER_FREQ 틱)마다 */
+        if (ticks % TIMER_FREQ == 0) {
+            mlfqs_update_load_avg();       // load_avg 재계산
+            mlfqs_update_all_recent_cpu(); // 모든 스레드 recent_cpu 재계산
+        }
+        
+        /* 매 4틱마다 */
+        if (ticks % 4 == 0) {
+            mlfqs_update_all_priorities(); // 모든 스레드 priority 재계산
+        }
+    }
+
+    thread_tick ();
 }
 
 
