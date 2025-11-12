@@ -114,6 +114,12 @@ struct thread {
    Controlled by kernel command-line option "-o mlfqs". */
 extern bool thread_mlfqs;
 
+bool sooner_first(const struct list_elem* a,
+                  const struct list_elem* b,
+                  void* _);
+bool high_priority_first(const struct list_elem* a,
+                         const struct list_elem* b,
+                         void* _);
 void insert_sleep_list(void);
 void awake(int64_t);
 void thread_init(void);

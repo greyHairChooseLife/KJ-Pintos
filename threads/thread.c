@@ -64,12 +64,6 @@ static void init_thread(struct thread*, const char* name, int priority);
 static void do_schedule(int status);
 static void schedule(void);
 static tid_t allocate_tid(void);
-static bool sooner_first(const struct list_elem* a,
-                         const struct list_elem* b,
-                         void* _);
-static bool high_priority_first(const struct list_elem* a,
-                                const struct list_elem* b,
-                                void* _);
 
 /* Returns true if T appears to point to a valid thread. */
 #define is_thread(t) ((t) != NULL && (t)->magic == THREAD_MAGIC)
