@@ -89,8 +89,8 @@ void timer_sleep(int64_t ticks) {
     intr_disable();
     if (timer_elapsed(start) < ticks)
     {
-        struct thread* t = thread_current();
-        t->wakeup_time = start + ticks;
+        thread_current()->wakeup_time = start + ticks;
+        insert_sleep_list();
         thread_block();
     }
     intr_enable();

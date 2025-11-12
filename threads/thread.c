@@ -154,6 +154,12 @@ void thread_tick(void) {
     /* Enforce preemption. */
     if (++thread_ticks >= TIME_SLICE) intr_yield_on_return();
 }
+void insert_sleep_list(void) {
+    struct thread* curr = thread_current();
+
+    if (curr != idle_thread)
+        list_insert_ordered(&sleep_list, &curr->elem, sooner_first, NULL);
+}
 
 // wakeup_time 정렬된 것을 활용해 깨울만큼 깨운다.(thread_unblock)
 void awake(int64_t total_elapsed) {
@@ -248,9 +254,6 @@ void thread_block(void) {
     ASSERT(intr_get_level() == INTR_OFF);
 
     curr->status = THREAD_BLOCKED;
-    if (curr != idle_thread)
-        list_insert_ordered(&sleep_list, &curr->elem, sooner_first, NULL);
-
     schedule();
 }
 

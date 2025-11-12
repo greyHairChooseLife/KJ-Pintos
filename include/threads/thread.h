@@ -114,6 +114,7 @@ struct thread {
    Controlled by kernel command-line option "-o mlfqs". */
 extern bool thread_mlfqs;
 
+void insert_sleep_list(void);
 void awake(int64_t);
 void thread_init(void);
 void thread_start(void);
