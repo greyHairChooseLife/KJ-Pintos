@@ -29,6 +29,7 @@
 #include "threads/synch.h"
 #include <stdio.h>
 #include <string.h>
+#include "list.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 
@@ -230,9 +231,24 @@ bool lock_held_by_current_thread(const struct lock* lock) {
 
 /* One semaphore in a list. */
 struct semaphore_elem {
-    struct list_elem elem;      /* List element. */
-    struct semaphore semaphore; /* This semaphore. */
+    struct list_elem elem;         /* List element. */
+    struct semaphore semaphore;    /* This semaphore. */
+    struct thread* waiter_thread;  // 더 쉬운 비교를 위해
 };
+
+// @a &waiter.elem
+// @b one of &cond->waiters
+bool high_priority_sema_first(const struct list_elem* a,
+                              const struct list_elem* b,
+                              void* _) {
+    struct semaphore_elem* semaElemA =
+        list_entry(a, struct semaphore_elem, elem);
+    struct semaphore_elem* semaElemB =
+        list_entry(b, struct semaphore_elem, elem);
+
+    return semaElemA->waiter_thread->priority >
+           semaElemB->waiter_thread->priority;
+}
 
 /* Initializes condition variable COND.  A condition variable
    allows one piece of code to signal a condition and cooperating
@@ -272,7 +288,16 @@ void cond_wait(struct condition* cond, struct lock* lock) {
     ASSERT(lock_held_by_current_thread(lock));
 
     sema_init(&waiter.semaphore, 0);
-    list_push_back(&cond->waiters, &waiter.elem);
+    waiter.waiter_thread = thread_current();
+
+    if (!list_empty(&cond->waiters))
+    {
+        list_insert_ordered(&cond->waiters, &waiter.elem,
+                            high_priority_sema_first, NULL);
+    }
+    else
+        list_push_back(&cond->waiters, &waiter.elem);
+
     lock_release(lock);
     sema_down(&waiter.semaphore);
     lock_acquire(lock);
