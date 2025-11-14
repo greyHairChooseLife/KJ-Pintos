@@ -349,10 +349,33 @@ void thread_yield(void) {
     intr_set_level(old_level);
 }
 
+bool high_priority_donation_elem(const struct list_elem* a,
+                                 const struct list_elem* b,
+                                 void* _) {
+    struct thread* ta = list_entry(a, struct thread, donation_elem);
+    struct thread* tb = list_entry(b, struct thread, donation_elem);
+    return ta->priority < tb->priority;
+}
+
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
     struct thread* curr = thread_current();
-    curr->priority = new_priority;
+    curr->base_priority = new_priority;
+
+    // Recalculate effective priority
+    if (list_empty(&curr->donation_list))
+    {
+        curr->priority = new_priority;
+    }
+    else
+    {
+        // Find maximum donated priority
+        struct list_elem* max_elem =
+            list_max(&curr->donation_list, high_priority_donation_elem, NULL);
+        struct thread* max_donor =
+            list_entry(max_elem, struct thread, donation_elem);
+        curr->priority = max_donor->priority;
+    }
 
     if (list_empty(&ready_list)) return;
 
@@ -446,6 +469,9 @@ static void init_thread(struct thread* t, const char* name, int priority) {
     strlcpy(t->name, name, sizeof t->name);
     t->tf.rsp = (uint64_t)t + PGSIZE - sizeof(void*);
     t->priority = priority;
+    t->base_priority = priority;
+    t->waiting_lock = NULL;
+    list_init(&t->donation_list);
     t->magic = THREAD_MAGIC;
 }
 

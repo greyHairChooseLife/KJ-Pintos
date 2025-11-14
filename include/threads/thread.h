@@ -90,10 +90,16 @@ struct thread {
     enum thread_status status; /* Thread state. */
     char name[16];             /* Name (for debugging purposes). */
     int priority;              /* Priority. */
+    int base_priority;         /* Base priority (before donation). */
     int64_t wakeup_time;       /* Wake up time */
 
+    /* For priority donation. */
+    struct lock* waiting_lock; /* Lock that this thread is waiting for. */
+    struct list donation_list; /* List of threads donating to this thread. */
+
     /* Shared between thread.c and synch.c. */
-    struct list_elem elem; /* List element. */
+    struct list_elem elem;          /* List element. */
+    struct list_elem donation_elem; /* Element for donation_list. */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -150,5 +156,8 @@ int thread_get_recent_cpu(void);
 int thread_get_load_avg(void);
 
 void do_iret(struct intr_frame* tf);
+bool high_priority_donation_elem(const struct list_elem* a,
+                                 const struct list_elem* b,
+                                 void* _);
 
 #endif /* threads/thread.h */

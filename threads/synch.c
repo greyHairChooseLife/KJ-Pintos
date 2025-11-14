@@ -185,8 +185,27 @@ void lock_acquire(struct lock* lock) {
     ASSERT(!intr_context());
     ASSERT(!lock_held_by_current_thread(lock));
 
+    struct thread* curr = thread_current();
+
+    // If lock is held by another thread, donate priority
+    if (lock->holder != NULL)
+    {
+        curr->waiting_lock = lock;
+        list_insert_ordered(&lock->holder->donation_list, &curr->donation_elem,
+                            high_priority_first, NULL);
+
+        // Update holder's priority if needed
+        if (curr->priority > lock->holder->priority)
+        {
+            lock->holder->priority = curr->priority;
+        }
+    }
+
     sema_down(&lock->semaphore);
+
+    // After acquiring lock
     lock->holder = thread_current();
+    curr->waiting_lock = NULL;
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
@@ -215,6 +234,33 @@ bool lock_try_acquire(struct lock* lock) {
 void lock_release(struct lock* lock) {
     ASSERT(lock != NULL);
     ASSERT(lock_held_by_current_thread(lock));
+
+    struct thread* curr = thread_current();
+
+    // Remove all donations to this thread and recalculate priority
+    struct list_elem* e = list_begin(&curr->donation_list);
+    while (e != list_end(&curr->donation_list))
+    {
+        struct thread* donor = list_entry(e, struct thread, donation_elem);
+        if (donor->waiting_lock == lock)
+            e = list_remove(e);
+        else
+            e = list_next(e);
+    }
+
+    // Recalculate priority
+    if (list_empty(&curr->donation_list))
+    {
+        curr->priority = curr->base_priority;
+    }
+    else
+    {
+        struct list_elem* max_elem =
+            list_max(&curr->donation_list, high_priority_donation_elem, NULL);
+        struct thread* max_donor =
+            list_entry(max_elem, struct thread, donation_elem);
+        curr->priority = max_donor->priority;
+    }
 
     lock->holder = NULL;
     sema_up(&lock->semaphore);
