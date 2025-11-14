@@ -159,5 +159,6 @@ void do_iret(struct intr_frame* tf);
 bool high_priority_donation_elem(const struct list_elem* a,
                                  const struct list_elem* b,
                                  void* _);
+void update_donation_chain(struct thread* t);
 
 #endif /* threads/thread.h */

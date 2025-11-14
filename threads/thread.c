@@ -385,6 +385,24 @@ void thread_set_priority(int new_priority) {
     if (successor->priority > curr->priority) thread_yield();
 }
 
+// 기부자의 우선순위 변경 시, 기부 받는 쪽(holder)도 업데이트
+void update_donation_chain(struct thread* t) {
+    if (t->waiting_lock == NULL) return;
+
+    struct lock* lock = t->waiting_lock;
+    struct thread* holder = lock->holder;
+
+    if (holder == NULL) return;
+
+    // holder의 우선순위가 변경되어야 하는지 확인
+    if (t->priority > holder->priority)
+    {
+        holder->priority = t->priority;
+        // 연쇄적으로 holder도 업데이트 (재귀)
+        update_donation_chain(holder);
+    }
+}
+
 /* Returns the current thread's priority. */
 int thread_get_priority(void) { return thread_current()->priority; }
 

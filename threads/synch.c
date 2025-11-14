@@ -198,6 +198,7 @@ void lock_acquire(struct lock* lock) {
         if (curr->priority > lock->holder->priority)
         {
             lock->holder->priority = curr->priority;
+            update_donation_chain(lock->holder);  // 연쇄 기부
         }
     }
 
