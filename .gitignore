@@ -1,0 +1,12 @@
+threads/build
+
+# test/cache
+my_test/error
+my_test/output
+my_test/result
+
+# bear
+compile_commands.json
+
+# this is clangd cache
+.cache
