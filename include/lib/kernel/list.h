@@ -33,8 +33,8 @@
  *
  * struct list_elem *e;
  *
- * for (e = list_begin (&foo_list); e != list_end (&foo_list); e = list_next (e)) {
- *    struct foo *f = list_entry (e, struct foo, elem);
+ * for (e = list_begin (&foo_list); e != list_end (&foo_list); e = list_next
+ * (e)) { struct foo *f = list_entry (e, struct foo, elem);
  *    ...f로 무언가를 수행...
  * }
  *
@@ -46,7 +46,8 @@
  * 영감을 받았습니다. list<>에 익숙하다면, 이것을 사용하기
  * 쉽다고 느낄 것입니다. 하지만, 이 리스트들은 *어떠한* 타입 검사도
  * 하지 않으며, 다른 정확성 검사도 거의 수행할 수 없다는 점을
- * 강조해야 합니다. 만약 당신이 실수한다면, 크게 데일 것입니다 (it will bite you).
+ * 강조해야 합니다. 만약 당신이 실수한다면, 크게 데일 것입니다 (it will bite
+ * you).
  *
  * 리스트 용어집:
  *
@@ -84,14 +85,14 @@
 
 /* 리스트 요소. */
 struct list_elem {
-    struct list_elem *prev;     /* 이전 리스트 요소. */
-    struct list_elem *next;     /* 다음 리스트 요소. */
+    struct list_elem* prev; /* 이전 리스트 요소. */
+    struct list_elem* next; /* 다음 리스트 요소. */
 };
 
 /* 리스트. */
 struct list {
-    struct list_elem head;      /* 리스트 head. */
-    struct list_elem tail;      /* 리스트 tail. */
+    struct list_elem head; /* 리스트 head. */
+    struct list_elem tail; /* 리스트 tail. */
 };
 
 /* 리스트 요소 LIST_ELEM을 가리키는 포인터를
@@ -99,64 +100,67 @@ struct list {
    변환합니다. 바깥 구조체 STRUCT의 이름과 리스트 요소의
    멤버 이름 MEMBER를 제공하세요. 예시는 파일
    상단의 큰 주석을 참조하세요. */
-#define list_entry(LIST_ELEM, STRUCT, MEMBER)           \
-    ((STRUCT *) ((uint8_t *) &(LIST_ELEM)->next      \
-        - offsetof (STRUCT, MEMBER.next)))
+#define list_entry(LIST_ELEM, STRUCT, MEMBER) \
+    ((STRUCT*)((uint8_t*)&(LIST_ELEM)->next - offsetof(STRUCT, MEMBER.next)))
 
-void list_init (struct list *);
+void list_init(struct list*);
 
 /* 리스트 순회. */
-struct list_elem *list_begin (struct list *);
-struct list_elem *list_next (struct list_elem *);
-struct list_elem *list_end (struct list *);
+struct list_elem* list_begin(struct list*);
+struct list_elem* list_next(struct list_elem*);
+struct list_elem* list_end(struct list*);
 
-struct list_elem *list_rbegin (struct list *);
-struct list_elem *list_prev (struct list_elem *);
-struct list_elem *list_rend (struct list *);
+struct list_elem* list_rbegin(struct list*);
+struct list_elem* list_prev(struct list_elem*);
+struct list_elem* list_rend(struct list*);
 
-struct list_elem *list_head (struct list *);
-struct list_elem *list_tail (struct list *);
+struct list_elem* list_head(struct list*);
+struct list_elem* list_tail(struct list*);
 
 /* 리스트 삽입. */
-void list_insert (struct list_elem *, struct list_elem *);
-void list_splice (struct list_elem *before,
-                 struct list_elem *first, struct list_elem *last);
-void list_push_front (struct list *, struct list_elem *);
-void list_push_back (struct list *, struct list_elem *);
+void list_insert(struct list_elem*, struct list_elem*);
+void list_splice(struct list_elem* before,
+                 struct list_elem* first,
+                 struct list_elem* last);
+void list_push_front(struct list*, struct list_elem*);
+void list_push_back(struct list*, struct list_elem*);
 
 /* 리스트 제거. */
-struct list_elem *list_remove (struct list_elem *);
-struct list_elem *list_pop_front (struct list *);
-struct list_elem *list_pop_back (struct list *);
+struct list_elem* list_remove(struct list_elem*);
+struct list_elem* list_pop_front(struct list*);
+struct list_elem* list_pop_back(struct list*);
 
 /* 리스트 요소 접근. */
-struct list_elem *list_front (struct list *);
-struct list_elem *list_back (struct list *);
+struct list_elem* list_front(struct list*);
+struct list_elem* list_back(struct list*);
 
 /* 리스트 속성. */
-size_t list_size (struct list *);
-bool list_empty (struct list *);
+size_t list_size(struct list*);
+bool list_empty(struct list*);
 
 /* 기타. */
-void list_reverse (struct list *);
+void list_reverse(struct list*);
 
 /* 보조 데이터 AUX가 주어진 상태에서, 두 리스트 요소 A와 B의
    값을 비교합니다. A가 B보다 작으면 true를 반환하고,
    A가 B보다 크거나 같으면 false를 반환합니다. */
-typedef bool list_less_func (const struct list_elem *a,
-                             const struct list_elem *b,
-                             void *aux);
+typedef bool list_less_func(const struct list_elem* a,
+                            const struct list_elem* b,
+                            void* aux);
 
 /* 정렬된 요소들을 가진 리스트에 대한 연산. */
-void list_sort (struct list *,
-                list_less_func *, void *aux);
-void list_insert_ordered (struct list *, struct list_elem *,
-                          list_less_func *, void *aux);
-void list_unique (struct list *, struct list *duplicates,
-                  list_less_func *, void *aux);
+void list_sort(struct list*, list_less_func*, void* aux);
+void list_insert_ordered(struct list*,
+                         struct list_elem*,
+                         list_less_func*,
+                         void* aux);
+void list_unique(struct list*,
+                 struct list* duplicates,
+                 list_less_func*,
+                 void* aux);
 
 /* 최대값 및 최소값. */
-struct list_elem *list_max (struct list *, list_less_func *, void *aux);
-struct list_elem *list_min (struct list *, list_less_func *, void *aux);
+struct list_elem* list_max(struct list*, list_less_func*, void* aux);
+struct list_elem* list_min(struct list*, list_less_func*, void* aux);
 
 #endif /* lib/kernel/list.h */

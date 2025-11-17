@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "devices/kbd.h"
 #include "devices/input.h"
+#include "devices/kbd.h"
 #include "devices/serial.h"
 #include "devices/timer.h"
 #include "devices/vga.h"
@@ -22,9 +22,9 @@
 #include "threads/pte.h"
 #include "threads/thread.h"
 #ifdef USERPROG
-#include "userprog/process.h"
 #include "userprog/exception.h"
 #include "userprog/gdt.h"
+#include "userprog/process.h"
 #include "userprog/syscall.h"
 #include "userprog/tss.h"
 #endif
@@ -39,7 +39,7 @@
 #endif
 
 /* 커널 매핑만 포함된 페이지-맵-레벨-4 (PML4). */
-uint64_t *base_pml4;
+uint64_t* base_pml4;
 
 #ifdef FILESYS
 /* -f: 파일 시스템을 포맷할까요? */
@@ -54,9 +54,9 @@ bool thread_tests;
 static void bss_init(void);
 static void paging_init(uint64_t mem_end);
 
-static char **read_command_line(void);
-static char **parse_options(char **argv);
-static void run_actions(char **argv);
+static char** read_command_line(void);
+static char** parse_options(char** argv);
+static void run_actions(char** argv);
 static void usage(void);
 
 static void print_stats(void);
@@ -64,10 +64,9 @@ static void print_stats(void);
 int main(void) NO_RETURN;
 
 /* Pintos 메인 프로그램. */
-int main(void)
-{
+int main(void) {
     uint64_t mem_end;
-    char **argv;
+    char** argv;
 
     /* BSS를 클리어하고 시스템의 RAM 크기를 가져옵니다. */
     bss_init();
@@ -121,14 +120,12 @@ int main(void)
     run_actions(argv);
 
     /* 마무리합니다. */
-    if (power_off_when_done)
-        power_off();
+    if (power_off_when_done) power_off();
     thread_exit();
 }
 
 /* BSS 클리어 */
-static void bss_init(void)
-{
+static void bss_init(void) {
     /* "BSS"는 0으로 초기화되어야 하는 세그먼트입니다.
        이 세그먼트는 디스크에 저장되거나 커널 로더에 의해
        0으로 초기화되지 않으므로, 우리가 직접 0으로 만들어야 합니다.
@@ -142,8 +139,7 @@ static void bss_init(void)
 /* 커널 가상 매핑으로 페이지 테이블을 채우고,
  * CPU가 새 페이지 디렉터리를 사용하도록 설정합니다.
  * base_pml4가 자신이 생성한 pml4를 가리키도록 합니다. */
-static void paging_init(uint64_t mem_end)
-{
+static void paging_init(uint64_t mem_end) {
     uint64_t *pml4, *pte;
     int perm;
     pml4 = base_pml4 = palloc_get_page(PAL_ASSERT | PAL_ZERO);
@@ -159,8 +155,7 @@ static void paging_init(uint64_t mem_end)
         if ((uint64_t)&start <= va && va < (uint64_t)&_end_kernel_text)
             perm &= ~PTE_W;
 
-        if ((pte = pml4e_walk(pml4, va, 1)) != NULL)
-            *pte = pa | perm;
+        if ((pte = pml4e_walk(pml4, va, 1)) != NULL) *pte = pa | perm;
     }
 
     // cr3 리로드
@@ -169,20 +164,18 @@ static void paging_init(uint64_t mem_end)
 
 /* 커널 커맨드 라인을 단어들로 분리하여
    argv와 유사한 배열로 반환합니다. */
-static char ** read_command_line(void)
-{
-    static char *argv[LOADER_ARGS_LEN / 2 + 1];
+static char** read_command_line(void) {
+    static char* argv[LOADER_ARGS_LEN / 2 + 1];
     char *p, *end;
     int argc;
     int i;
 
-    argc = *(uint32_t *)ptov(LOADER_ARG_CNT);
+    argc = *(uint32_t*)ptov(LOADER_ARG_CNT);
     p = ptov(LOADER_ARGS);
     end = p + LOADER_ARGS_LEN;
     for (i = 0; i < argc; i++)
     {
-        if (p >= end)
-            PANIC("command line arguments overflow");
+        if (p >= end) PANIC("command line arguments overflow");
 
         argv[i] = p;
         p += strnlen(p, end - p) + 1;
@@ -203,13 +196,12 @@ static char ** read_command_line(void)
 
 /* ARGV[]의 옵션들을 파싱하고
    옵션이 아닌 첫 번째 인자를 반환합니다. */
-static char ** parse_options(char **argv)
-{
+static char** parse_options(char** argv) {
     for (; *argv != NULL && **argv == '-'; argv++)
     {
-        char *save_ptr;
-        char *name = strtok_r(*argv, "=", &save_ptr);
-        char *value = strtok_r(NULL, "", &save_ptr);
+        char* save_ptr;
+        char* name = strtok_r(*argv, "=", &save_ptr);
+        char* value = strtok_r(NULL, "", &save_ptr);
 
         if (!strcmp(name, "-h"))
             usage();
@@ -237,9 +229,8 @@ static char ** parse_options(char **argv)
 }
 
 /* ARGV[1]에 명시된 작업을 실행합니다. */
-static void run_task(char **argv)
-{
-    const char *task = argv[1];
+static void run_task(char** argv) {
+    const char* task = argv[1];
 
     printf("Executing '%s':\n", task);
 #ifdef USERPROG
@@ -259,32 +250,27 @@ static void run_task(char **argv)
 
 /* ARGV[]에 명시된 모든 작업(action)들을
    널 포인터(NULL) 직전까지 실행합니다. */
-static void run_actions(char **argv)
-{
+static void run_actions(char** argv) {
     /* 작업(Action). */
-    struct action
-    {
-        char *name;                     /* 작업 이름. */
-        int argc;                       /* 작업 이름을 포함한 인자(args)의 수. */
-        void (*function)(char **argv);  /* 작업을 실행할 함수. */
+    struct action {
+        char* name;                    /* 작업 이름. */
+        int argc;                      /* 작업 이름을 포함한 인자(args)의 수. */
+        void (*function)(char** argv); /* 작업을 실행할 함수. */
     };
 
     /* 지원되는 작업 테이블. */
     static const struct action actions[] = {
         {"run", 2, run_task},
 #ifdef FILESYS
-        {"ls", 1, fsutil_ls},
-        {"cat", 2, fsutil_cat},
-        {"rm", 2, fsutil_rm},
-        {"put", 2, fsutil_put},
-        {"get", 2, fsutil_get},
+        {"ls", 1, fsutil_ls},   {"cat", 2, fsutil_cat}, {"rm", 2, fsutil_rm},
+        {"put", 2, fsutil_put}, {"get", 2, fsutil_get},
 #endif
         {NULL, 0, NULL},
     };
 
     while (*argv != NULL)
     {
-        const struct action *a;
+        const struct action* a;
         int i;
 
         /* 작업 이름 찾기. */
@@ -297,7 +283,8 @@ static void run_actions(char **argv)
         /* 필요한 인자(arguments) 확인. */
         for (i = 1; i < a->argc; i++)
             if (argv[i] == NULL)
-                PANIC("action `%s' requires %d argument(s)", *argv, a->argc - 1);
+                PANIC("action `%s' requires %d argument(s)", *argv,
+                      a->argc - 1);
 
         /* 작업(action)을 호출하고 다음으로 이동. */
         a->function(argv);
@@ -307,33 +294,33 @@ static void run_actions(char **argv)
 
 /* 커널 커맨드 라인 도움말 메시지를 출력하고
    머신의 전원을 끕니다. */
-static void usage(void)
-{
-    printf("\nCommand line syntax: [OPTION...] [ACTION...]\n"
-           "Options must precede actions.\n"
-           "Actions are executed in the order specified.\n"
-           "\nAvailable actions:\n"
+static void usage(void) {
+    printf(
+        "\nCommand line syntax: [OPTION...] [ACTION...]\n"
+        "Options must precede actions.\n"
+        "Actions are executed in the order specified.\n"
+        "\nAvailable actions:\n"
 #ifdef USERPROG
-           "  run 'PROG [ARG...]' Run PROG and wait for it to complete.\n"
+        "  run 'PROG [ARG...]' Run PROG and wait for it to complete.\n"
 #else
-           "  run TEST          Run TEST.\n"
+        "  run TEST          Run TEST.\n"
 #endif
 #ifdef FILESYS
-           "  ls                List files in the root directory.\n"
-           "  cat FILE          Print FILE to the console.\n"
-           "  rm FILE           Delete FILE.\n"
-           "Use these actions indirectly via `pintos' -g and -p options:\n"
-           "  put FILE          Put FILE into file system from scratch disk.\n"
-           "  get FILE          Get FILE from file system into scratch disk.\n"
+        "  ls                List files in the root directory.\n"
+        "  cat FILE          Print FILE to the console.\n"
+        "  rm FILE           Delete FILE.\n"
+        "Use these actions indirectly via `pintos' -g and -p options:\n"
+        "  put FILE          Put FILE into file system from scratch disk.\n"
+        "  get FILE          Get FILE from file system into scratch disk.\n"
 #endif
-           "\nOptions:\n"
-           "  -h                Print this help message and power off.\n"
-           "  -q                Power off VM after actions or on panic.\n"
-           "  -f                Format file system disk during startup.\n"
-           "  -rs=SEED          Set random number seed to SEED.\n"
-           "  -mlfqs            Use multi-level feedback queue scheduler.\n"
+        "\nOptions:\n"
+        "  -h                Print this help message and power off.\n"
+        "  -q                Power off VM after actions or on panic.\n"
+        "  -f                Format file system disk during startup.\n"
+        "  -rs=SEED          Set random number seed to SEED.\n"
+        "  -mlfqs            Use multi-level feedback queue scheduler.\n"
 #ifdef USERPROG
-           "  -ul=COUNT         Limit user memory to COUNT pages.\n"
+        "  -ul=COUNT         Limit user memory to COUNT pages.\n"
 #endif
     );
     power_off();
@@ -341,8 +328,7 @@ static void usage(void)
 
 /* 우리가 실행 중인 머신의 전원을 끕니다
    (Bochs나 QEMU에서 실행 중일 경우). */
-void power_off(void)
-{
+void power_off(void) {
 #ifdef FILESYS
     filesys_done();
 #endif
@@ -351,13 +337,11 @@ void power_off(void)
 
     printf("Powering off...\n");
     outw(0x604, 0x2000); /* qemu를 위한 전원 끄기 명령어 */
-    for (;;)
-        ;
+    for (;;);
 }
 
 /* Pintos 실행에 대한 통계를 출력합니다. */
-static void print_stats(void)
-{
+static void print_stats(void) {
     timer_print_stats();
     thread_print_stats();
 #ifdef FILESYS
