@@ -63,7 +63,7 @@ windows:
           - tm.1_title 'auto make'
           - docker exec -it jg-c-w10 bash
           - cd /workspace/userprog
-          - watch -n 1 'make'
+          - find . -name '*.c' -o -name '*.h' | entr bash -c 'make -C userprog/ && echo -e "=====================\n\nBuild Done: $(date +"%H:%M:%S")"'
       - shell_command:
           - tm.1_title 'build for userprog project'
           - docker exec -it jg-c-w10 bash
