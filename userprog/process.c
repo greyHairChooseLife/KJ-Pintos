@@ -411,6 +411,8 @@ static bool load(const char* file_name, struct intr_frame* if_) {
     /* TODO: Your code goes here.
      * TODO: Implement argument passing (see project2/argument_passing.html). */
 
+    // 1. if_->rsp가 가리키는 위치에 쌓아준다.(gitbook에 소개된 규약에 따라)
+    // 2. rdi, rsi 세팅해준다.
     success = true;
 
 done:
