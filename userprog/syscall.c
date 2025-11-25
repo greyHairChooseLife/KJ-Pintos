@@ -1,6 +1,7 @@
 #include "userprog/syscall.h"
 #include <stdio.h>
 #include <syscall-nr.h>
+#include "filesys/filesys.h"
 #include "intrinsic.h"
 #include "threads/flags.h"
 #include "threads/init.h"
@@ -80,12 +81,25 @@ void syscall_handler(struct intr_frame* f UNUSED) {
             thread_exit();
         }
 
+        case SYS_CREATE: {
+            char* fileName = (char*)f->R.rdi;
+            unsigned initialSize = f->R.rsi;
+
+            if (!is_valid_address(fileName))
+            {
+                f->R.rax = false;
+                break;
+            }
+
+            f->R.rax = filesys_create(fileName, initialSize);
+            break;
+        }
+
         default: thread_exit();
     }
     // SYS_FORK,     /* Clone current process. */
     // SYS_EXEC,     /* Switch current process. */
     // SYS_WAIT,     /* Wait for a child process to die. */
-    // SYS_CREATE,   /* Create a file. */
     // SYS_REMOVE,   /* Delete a file. */
     // SYS_OPEN,     /* Open a file. */
     // SYS_FILESIZE, /* Obtain a file's size. */
