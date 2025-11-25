@@ -54,7 +54,9 @@ static bool is_valid_address(void* addr) {
 
 /* The main system call interface */
 void syscall_handler(struct intr_frame* f UNUSED) {
-    // TODO: Your implementation goes here.
-    printf("system call!\n");
-    thread_exit();
+    switch (f->R.rax)
+    {
+        case SYS_HALT: power_off();
+        default: thread_exit();
+    }
 }
