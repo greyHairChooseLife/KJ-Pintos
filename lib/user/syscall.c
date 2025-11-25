@@ -19,15 +19,15 @@ __attribute__((always_inline)) static __inline int64_t syscall(uint64_t num_,
     register uint64_t* a6 asm("r9") = (uint64_t*)a6_;
 
     __asm __volatile(
-        "mov %1, %%rax\n"
-        "mov %2, %%rdi\n"
-        "mov %3, %%rsi\n"
-        "mov %4, %%rdx\n"
-        "mov %5, %%r10\n"
-        "mov %6, %%r8\n"
-        "mov %7, %%r9\n"
+        "mov %1, %%rax\n"  // syscall vector number
+        "mov %2, %%rdi\n"  // 인자 1
+        "mov %3, %%rsi\n"  // 인자 2
+        "mov %4, %%rdx\n"  // 인자 3
+        "mov %5, %%r10\n"  // 인자 4
+        "mov %6, %%r8\n"   // 인자 5
+        "mov %7, %%r9\n"   // 인자 6
         "syscall\n"
-        : "=a"(ret)
+        : "=a"(ret)  // syscall의 리턴값을 ret 변수에 복사
         : "g"(num), "g"(a1), "g"(a2), "g"(a3), "g"(a4), "g"(a5), "g"(a6)
         : "cc", "memory");
     return ret;
