@@ -326,6 +326,8 @@ static bool load(const char* file_name, struct intr_frame* if_) {
         token = strtok_r(NULL, " ", &left);
     }
 
+    void* argvAddrList[argc];  // arg의 주소값들 복사
+
     /* Allocate and activate page directory. */
     t->pml4 = pml4_create();
     if (t->pml4 == NULL) goto done;
@@ -414,8 +416,35 @@ static bool load(const char* file_name, struct intr_frame* if_) {
     /* Start address. */
     if_->rip = ehdr.e_entry;
 
-    /* TODO: Your code goes here.
-     * TODO: Implement argument passing (see project2/argument_passing.html). */
+    // arguments 값 넣기
+    int argLen;
+    for (i = 0; argv[i] != NULL; i++)
+    {
+        argLen = strlen(argv[i]) + 1;
+
+        if_->rsp -= argLen;
+        memcpy((char*)if_->rsp, argv[i], argLen);
+        argvAddrList[i] = (void*)if_->rsp;
+    }
+
+    // word align
+    if_->rsp -= if_->rsp % sizeof(uint8_t*);
+
+    // argv[argc]는 NULL을 넣어준다.
+    if_->rsp -= sizeof(char*);
+
+    // arguments 주소 넣기
+    for (i = argc - 1; i >= 0; i--)
+    {
+        if_->rsp -= sizeof(char*);
+        memcpy((char*)if_->rsp, &argvAddrList[i], sizeof(char*));
+    }
+
+    if_->R.rdi = argc;
+    if_->R.rsi = (uint64_t)argv;
+
+    // (가짜)return value의 주소만큼 sp down
+    if_->rsp -= sizeof(void*);
 
     success = true;
 
