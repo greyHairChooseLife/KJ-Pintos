@@ -3,7 +3,8 @@ FROM ubuntu:22.04
 # Install dependencies if needed
 # install libc6-dev-i386 hence it provides /usr/include/bits/wordsize.h which is required building mdriver
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential \
-    make systemd-coredump libc6-dev-i386 fzf vim telnet htop net-tools iproute2 \
+    make systemd-coredump libc6-dev-i386 fzf vim telnet htop net-tools iproute2 entr \
+    bear \
     gdbserver \
     valgrind \
     qemu-system-x86

@@ -23,7 +23,7 @@ windows:
     panes:
       - shell_command:
           - tm.1_title 'editor'
-          - vi .
+          - git log --oneline --graph --all
         focus: true
 
   - window_name: run_test
@@ -31,7 +31,7 @@ windows:
     panes:
       - shell_command:
           - tm.1_title 'run pintos'
-          - docker exec -it jg-c-w9 bash
+          - docker exec -it jg-c-w10 bash
           - cd /workspace/my_test
           - ./test_thread.sh
         focus: true
@@ -43,7 +43,7 @@ windows:
           - watch -n 1 'cat my_test/result'
       - shell_command:
           - tm.1_title 'output'
-          - docker exec -it jg-c-w9 bash
+          - docker exec -it jg-c-w10 bash
           - watch -n 1 'cat my_test/output'
       - shell_command:
           - tm.1_title 'error'
@@ -53,7 +53,7 @@ windows:
           - vi my_test/output
       - shell_command:
           - tm.1_title 'pintos help'
-          - docker exec -it jg-c-w9 bash
+          - docker exec -it jg-c-w10 bash
           - pintos -h
 
   - window_name: docker_build
@@ -61,28 +61,28 @@ windows:
     panes:
       - shell_command:
           - tm.1_title 'auto make'
-          - docker exec -it jg-c-w9 bash
-          - cd /workspace/threads
-          - watch -n 1 'make'
+          - docker exec -it jg-c-w10 bash
+          - cd /workspace
+          - find . -name '*.c' -o -name '*.h' | entr bash -c 'make -C userprog/ && echo -e "=====================\n\nBuild Done: $(date +"%H:%M:%S")"'
       - shell_command:
-          - tm.1_title 'build for thread project'
-          - docker exec -it jg-c-w9 bash
-          - cd /workspace/threads
+          - tm.1_title 'build for userprog project'
+          - docker exec -it jg-c-w10 bash
+          - cd /workspace/userprog
           - cmd: bear -- make && sed -i 's|/workspace|/home/sy/jg/04.pintos/7team|g' compile_commands.json && mv compile_commands.json /workspace/compile_commands.json
             enter: false
         focus: true
       - shell_command:
-          - docker exec -it jg-c-w9 bash
+          - docker exec -it jg-c-w10 bash
           - htop
       - shell_command: vi config/Dockerfile
       - shell_command: lazydocker
       - shell_command:
           - tm.1_title 'build image'
-          - cmd: docker build -t jg-c-w9 config/
+          - cmd: docker build -t jg-c-w10 config/
             enter: false
       - shell_command:
           - tm.1_title 'run daemon container'
-          - cmd: docker run -d --name jg-c-w9 -v "$(git-root)/:/workspace" --network=host jg-c-w9
+          - cmd: docker run -d --name jg-c-w10 -v "$(git-root)/:/workspace" --network=host jg-c-w10
             enter: false
 
   - window_name: config
