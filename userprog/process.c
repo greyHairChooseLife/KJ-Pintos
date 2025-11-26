@@ -416,6 +416,9 @@ static bool load(const char* file_name, struct intr_frame* if_) {
     /* Start address. */
     if_->rip = ehdr.e_entry;
 
+    // objdump -d targetFile에서 출력되는 주소를 보면 진입점을 파악할 수 있다.
+    // printf("entry point addr: %p\n", (void*)if_->rip);
+
     // arguments 값 넣기
     int argLen;
     for (i = 0; argv[i] != NULL; i++)
