@@ -95,12 +95,24 @@ void syscall_handler(struct intr_frame* f UNUSED) {
             break;
         }
 
+        case SYS_REMOVE: {
+            char* fileName = (char*)f->R.rdi;
+
+            if (!is_valid_address(fileName))
+            {
+                f->R.rax = false;
+                break;
+            }
+
+            f->R.rax = filesys_remove(fileName);
+            break;
+        }
+
         default: thread_exit();
     }
     // SYS_FORK,     /* Clone current process. */
     // SYS_EXEC,     /* Switch current process. */
     // SYS_WAIT,     /* Wait for a child process to die. */
-    // SYS_REMOVE,   /* Delete a file. */
     // SYS_OPEN,     /* Open a file. */
     // SYS_FILESIZE, /* Obtain a file's size. */
     // SYS_READ,     /* Read from a file. */
