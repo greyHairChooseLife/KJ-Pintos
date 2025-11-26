@@ -1,6 +1,8 @@
 #include "userprog/syscall.h"
 #include <stdio.h>
 #include <syscall-nr.h>
+#include "devices/input.h"
+#include "filesys/file.h"
 #include "filesys/filesys.h"
 #include "intrinsic.h"
 #include "threads/flags.h"
@@ -158,13 +160,60 @@ void syscall_handler(struct intr_frame* f UNUSED) {
             break;
         }
 
+        case SYS_READ: {
+            int fd = (int)f->R.rdi;
+            char* buffer = (char*)f->R.rsi;
+            unsigned size = (unsigned)f->R.rdx;
+            unsigned read;  // 실제로 읽은 길이
+
+            if (!is_valid_address_buffer(buffer, size))
+            {
+                f->R.rax = -1;  // gitbook에 자료가 없다. 표준을 따른다.
+                break;
+            }
+
+            switch (fd)
+            {
+                // 표준 입력(키보드 읽기)
+                case 0: {
+                    for (read = 0; read < size; read++)
+                    {
+                        buffer[read] = (char)input_getc();
+
+                        // 개행문자를 만나면 탈출
+                        if (buffer[read] == '\n')
+                        {
+                            f->R.rax = read + 1;
+                            break;  // for 반복만 빠져나간다.
+                        }
+                    }
+
+                    // 끝까지 읽은 경우인지 아닌지 확인 필요
+                    if (size == read) f->R.rax = size;
+                    break;
+                }
+
+                // 표준 출력(터미널)을 읽을수는 없다.
+                case 1: {
+                    f->R.rax = -1;
+                    break;
+                }
+
+                // 일반적인 파일 읽기
+                default:
+                    f->R.rax =
+                        (unsigned)file_read(curr->fdTable[fd], buffer, size);
+            }
+
+            break;
+        }
+
         default: thread_exit();
     }
     // SYS_FORK,     /* Clone current process. */
     // SYS_EXEC,     /* Switch current process. */
     // SYS_WAIT,     /* Wait for a child process to die. */
     // SYS_FILESIZE, /* Obtain a file's size. */
-    // SYS_READ,     /* Read from a file. */
     // SYS_SEEK,     /* Change position in a file. */
     // SYS_TELL,     /* Report current position in a file. */
     // SYS_CLOSE,    /* Close a file. */
