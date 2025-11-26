@@ -444,7 +444,8 @@ static bool load(const char* file_name, struct intr_frame* if_) {
     }
 
     if_->R.rdi = argc;
-    if_->R.rsi = (uint64_t)argv;
+    if_->R.rsi = if_->rsp;
+    // printf("argc: %d, argv: %s\n", argc, *(char**)(if_->R.rsi));
 
     // (가짜)return value의 주소만큼 sp down
     if_->rsp -= sizeof(void*);
