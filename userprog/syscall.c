@@ -126,8 +126,11 @@ void syscall_handler(struct intr_frame* f UNUSED) {
 
         case SYS_WRITE: {
             int fd = (int)f->R.rdi;
-            const void* buffer = (void*)f->R.rsi;
+            void* buffer = (void*)f->R.rsi;
             unsigned size = (unsigned)f->R.rdx;
+
+            if (!is_valid_address_buffer(buffer, size))
+                f->R.rax = -1;  // gitbook에 자료가 없다. 표준을 따른다.
 
             if (fd == 1)
             {
